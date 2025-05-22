@@ -1,0 +1,57 @@
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
+
+:root {
+  --main-black: #161616;
+  --main-yellow: #ffe600;
+  --main-text: #ffffff;
+  --secondary-text: #ffffff80;
+  --button-text: #000000;
+  --secondary-bg-color: #202223;
+  --red-text-color: #fc423f;
+  --green-text-color: #34c759;
+}
+
+body {
+  background: var(--main-black);
+  padding: 0;
+  margin: 0;
+}
+
+* {
+  font-family: "Inter", sans-serif;
+}
+
+.text-h1 {
+  @apply text-[24px] font-[700] leading-[28px] tracking-[0.07px];
+}
+
+.text-h2 {
+  @apply text-[20px] font-[600] leading-[21px] tracking-[-0.23px];
+}
+
+.text-h3-bold {
+  @apply text-[17px] font-[600] leading-[22px] tracking-[-0.4px];
+}
+
+.text-h3 {
+  @apply text-[17px] font-[400] leading-[22px] tracking-[-0.4px];
+}
+
+.text-h4-bold {
+  @apply text-[15px] font-[600] leading-[20px] tracking-[-0.23px];
+}
+
+.text-h4 {
+  @apply text-[15px] font-[400] leading-[20px] tracking-[-0.23px] text-[var(--secondary-text)];
+}
+
+.text-h5 {
+  @apply text-[13px] font-[400] leading-[16px] tracking-[-0.08px] text-[var(--secondary-text)];
+}
+
+.button-yellow {
+  background-color: var(--main-yellow);
+  color: var(--button-text);
+  border-radius: 12px;
+}
