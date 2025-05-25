@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import styles from "./GamePage.module.css";
+import styles from "./GamePage.module.scss";
 import ModalPopup from "../components/popUps/ModalPopUp";
 import { Page } from "../components/Page";
 import { subscribeRaflle } from "../api/events";
@@ -172,18 +172,23 @@ const GamePage: React.FC = () => {
             )}
           </div>
           <div className={styles.gridContainer}>
-            <div ref={container} className={styles.listContainer}>
-              {raffle?.fields.map((item) => {
-                return (
-                  <div
-                    data-selected={selectedField === item.number}
-                    key={item.id}
-                    onClick={() =>
-                      showelAvailable && setSelectedField(item.number)
-                    }
-                  ></div>
-                );
-              })}
+            <div id="hexGrid">
+              <div className="hexCrop">
+                <div className="hexContainer">
+                  {raffle?.fields.map((item) => {
+                    return (
+                      <div
+                        className="hex"
+                        data-selected={selectedField === item.number}
+                        key={item.id}
+                        onClick={() =>
+                          showelAvailable && setSelectedField(item.number)
+                        }
+                      ></div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </div>

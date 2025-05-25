@@ -1,0 +1,86 @@
+@use "../hexi-flexi-grid" as hfg;
+
+//--- TEMPLATE -------------------------------//
+#hexGrid {
+  //--- SETTINGS -------------- VALUES ---------//
+  $gridWidth: 100vw; // 'auto',(px,pt,r/em,vw/h)
+  $gridHeight: 100%; // 'auto',(px,pt,r/em,vw/h)
+  $columnCount: 7; // 'auto',(number)
+  $rowCount: 50; // 'auto',(number)
+  $hexCount: auto; // 'auto',(number)
+  $hexLayout: row; // 'row','column','strict'
+  $gridOrient: vertical; // 'vertical','horizontal'
+  $crop: none; // 'none','crop'
+  $cropFactor: 1.1; // (number)
+  $hexContent: auto; // 'auto','center'
+  $hexSize: auto; // 'auto',(px,pt,r/em,vw/h)
+  $hexMargin: 0.3vw; // (px,pt,r/em,vw/h)
+  $hexShape: hexagon; // 'hexagon','circle'
+  $hexColor: tranparent; // hexcode,rgb/a,named
+  //--- BREAKPOINTS --- COLUMNS ----- WIDTH ----//
+
+  //--- IMAGES ---------------------------------//
+
+  $images: none;
+  //--- CUSTOM STYLES --------------------------//
+
+  transform: rotate(180deg) rotateY(180deg);
+  margin-top: auto;
+
+  .hexCrop {
+    height: 100%;
+  }
+  .hex {
+    user-select: none;
+    transform: scale(0.9);
+    transition: transform 0.2s ease-in-out;
+    &:hover,
+    &[data-selected="true"] {
+      filter: brightness(1.5);
+    }
+  }
+  .hex span {
+    font-size: 5vw;
+    color: #fffffb;
+    font-family: "Bungee", cursive;
+  }
+
+  //--- MIXINS ---------------------------------//
+  // Обращаемся к миксинам через пространство имен 'hfg'
+  @include hfg.hexWrapper(
+    $gridWidth,
+    $gridHeight,
+    $gridOrient,
+    $rowCount,
+    $columnCount
+  );
+  .hexCrop {
+    @include hfg.hexCrop($crop, $cropFactor);
+  }
+  .hexContainer {
+    @include hfg.hexContainer(
+      $gridWidth,
+      $gridHeight,
+      $gridOrient,
+      $columnCount,
+      $images,
+      $rowCount,
+      $hexLayout,
+      $hexContent,
+      $hexShape,
+      $hexColor,
+      $hexMargin,
+      $hexCount,
+      $hexSize
+    );
+  }
+  //--------------------------------------------//
+}
+
+#hexGrid .hexContainer .hex {
+  background-image: url("assets/hex.png") !important;
+}
+
+#hexGrid .hexContainer {
+  transform: rotateX(180deg) rotateX(180deg);
+}

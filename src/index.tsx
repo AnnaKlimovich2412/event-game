@@ -6,6 +6,7 @@ import { StrictMode } from "react";
 import { retrieveLaunchParams } from "@telegram-apps/sdk-react";
 
 import "./index.css";
+import "./styles/hexGrid.scss";
 
 import "./mockEnv.ts";
 import { Root } from "./components/Root.tsx";
