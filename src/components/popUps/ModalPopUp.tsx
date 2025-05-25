@@ -1,5 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Page } from "../Page";
+import { useEvent } from "../../context/Event.context";
+import { DateTime } from "luxon";
 
 export type PopupContentType =
   | "startGame"
@@ -8,32 +10,84 @@ export type PopupContentType =
   | null;
 
 interface ModalPopupProps {
-  isVisible: boolean;
   onClose: () => void;
   contentType?: PopupContentType;
   promoCode?: string;
 }
 
 const ModalPopup: React.FC<ModalPopupProps> = ({
-  isVisible,
   onClose,
   contentType,
   promoCode,
 }) => {
-  useEffect(() => {}, []);
+  const { raffle, registration } = useEvent();
+  const [timeRemaining, setTimeRemaining] = useState<string>("");
+
+  const formatTimeRemaining = (targetTimestamp: number): string => {
+    const now = DateTime.now().toMillis();
+    const diff = targetTimestamp - now;
+
+    if (diff <= 0) return "00:00";
+
+    const minutes = Math.floor(diff / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    return `${minutes.toString().padStart(2, "0")}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  const getGameEndTime = (): number | null => {
+    if (!raffle?.startedAtTimeStamp) return null;
+
+    const storageKey = `registration_${raffle.id}`;
+    const storedEndTime = localStorage.getItem(storageKey);
+
+    if (storedEndTime) {
+      return parseInt(storedEndTime);
+    }
+
+    const gameEndTime = raffle.startedAtTimeStamp + 5 * 60 * 1000;
+    localStorage.setItem(storageKey, gameEndTime.toString());
+    return gameEndTime;
+  };
+
+  useEffect(() => {
+    const gameEndTime = getGameEndTime();
+    if (!gameEndTime) return;
+
+    const updateTimer = () => {
+      setTimeRemaining(formatTimeRemaining(gameEndTime));
+    };
+
+    updateTimer();
+
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [raffle?.startedAtTimeStamp, raffle?.id]);
+
+  useEffect(() => {
+    if (registration === false && raffle?.id) {
+      const storageKey = `registration_${raffle.id}`;
+      localStorage.removeItem(storageKey);
+    }
+  }, [registration]);
 
   const renderTypedContent = () => {
     switch (contentType) {
       case "startGame":
         return (
           <div className="text-center py-4">
-            <p className="text-h3-bold">До начала игры</p>{" "}
-            <p
-              className="text-[#34C759] font-bold text-[34px] leading-[63px] tracking-[-0.08px]"
-              style={{ fontWeight: "700" }}
-            >
-              05:00
-            </p>
+            <p className="text-h3-bold text-[white]">До начала игры</p>
+            <div className="flex flex-col items-center gap-2">
+              <p
+                className="text-[#34C759] font-bold text-[34px] leading-[63px] tracking-[-0.08px]"
+                style={{ fontWeight: "700" }}
+              >
+                {timeRemaining || "05:00"}
+              </p>
+            </div>
           </div>
         );
       case "congratulations":
@@ -83,7 +137,7 @@ const ModalPopup: React.FC<ModalPopupProps> = ({
   };
 
   return (
-    <Page back={false}>
+    <Page>
       <div
         className="h-[100vh] w-[100vw] fixed inset-0 flex justify-center items-center z-50"
         style={{

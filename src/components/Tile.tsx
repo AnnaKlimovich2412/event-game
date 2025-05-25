@@ -1,12 +1,12 @@
 import { Button, Section } from "@telegram-apps/telegram-ui";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CreateEventResponce } from "../types/api";
+import { EventResponce } from "../types/api";
 import { DateTime } from "luxon";
 import { imageRetrieve } from "../api/events";
 
 interface TileProps {
-  event: CreateEventResponce;
+  event: EventResponce;
 }
 
 const Tile: React.FC<TileProps> = ({ event }) => {

@@ -4,123 +4,113 @@ import styles from "./GamePage.module.css";
 import ModalPopup from "../components/popUps/ModalPopUp";
 import { Page } from "../components/Page";
 import { subscribeRaflle } from "../api/events";
+import { useWebSocket } from "../hooks/useWebSocket";
+import { useEvent } from "../context/Event.context";
+import { useEventPolling } from "../hooks/useEventPolling";
+import { DateTime } from "luxon";
 
 type PopupContentType = "startGame" | "congratulations" | "tryAgain" | null;
 
-// Define WebSocket message types
-interface WebSocketMessage {
-  type: string;
-  data: any;
-  fields?: unknown[];
-}
-
 const GamePage: React.FC = () => {
-  // Get event ID from URL paramsF
-  const { raffleId: raffleId } = useParams<{ raffleId: string }>();
+  const { raffleId } = useParams<{ raffleId: string }>();
+
+  useEventPolling();
 
   const container = useRef(null);
-  const [isPopupVisible, setIsPopupVisible] = useState(true);
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+
   const [popupContent, setPopupContent] =
     useState<PopupContentType>("congratulations");
   const [promoCode, setPromoCode] = useState("TESTCODE");
-  const [fields, setFields] = useState<unknown[]>([]);
+  const [selectedField, setSelectedField] = useState<number | null>(null);
+  const [fields, setFields] = useState<any[]>([]);
+  const [showAlredyUsed, setShowAlredyUsed] = useState<boolean>(false);
+  const [showelAvailable, setShowelAvailable] = useState<boolean>(true);
+  const [gameTimeRemaining, setGameTimeRemaining] = useState<string>("0:00");
 
-  // WebSocket state
-  const [isConnected, setIsConnected] = useState(false);
-  const webSocketRef = useRef<WebSocket | null>(null);
+  const { registration, raffle, gameInProcess } = useEvent();
 
-  // Connect to WebSocket when component mounts
+  const { isConnected, lastMessage, sendMessage } = useWebSocket(raffle?.id);
+
+  const formatGameTime = (targetTime: number): string => {
+    if (!targetTime) return "0:00";
+
+    const target = DateTime.fromMillis(targetTime);
+    const now = DateTime.now();
+    const diff = target.diff(now, ["minutes", "seconds"]);
+
+    if (diff.toMillis() <= 0) return "0:00";
+
+    const minutes = Math.floor(diff.minutes);
+    const seconds = Math.floor(diff.seconds % 60);
+
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  useEffect(() => {
+    const time = raffle?.openUntilAtTimeStamp;
+    if (!time) return;
+
+    const updateGameTimer = () => {
+      setGameTimeRemaining(formatGameTime(time));
+    };
+
+    updateGameTimer();
+    const interval = setInterval(updateGameTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [raffle?.openUntilAtTimeStamp]);
+
   useEffect(() => {
     if (raffleId) {
       subscribeRaflle(raffleId);
     }
-
-    const connectWebSocket = () => {
-      const token = localStorage.getItem("authToken");
-      // Build WebSocket URL with query parameters that include necessary headers/information
-      const wsUrl = new URL(`wss://wssgame.tmaevent.com`);
-
-      wsUrl.searchParams.append("raffle_id", raffleId || "");
-      wsUrl.searchParams.append("token", token || "");
-
-      const ws = new WebSocket(wsUrl.toString());
-
-      ws.onopen = () => {
-        console.log("WebSocket connected for raffle:", raffleId);
-        setIsConnected(true);
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const message: WebSocketMessage = JSON.parse(event.data);
-          handleWebSocketMessage(message);
-        } catch (error) {
-          console.error("Error parsing WebSocket message:", error);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-      };
-
-      ws.onclose = () => {
-        console.log("WebSocket disconnected");
-        setIsConnected(false);
-
-        // Optional: Reconnect logic
-        setTimeout(() => {
-          if (webSocketRef.current === null) {
-            connectWebSocket();
-          }
-        }, 3000);
-      };
-
-      webSocketRef.current = ws;
-    };
-
-    connectWebSocket();
-
-    // Cleanup on component unmount
-    return () => {
-      if (webSocketRef.current) {
-        webSocketRef.current.close();
-        webSocketRef.current = null;
-      }
-    };
   }, [raffleId]);
 
-  const savePlace = (index: number) => {
+  useEffect(() => {
+    if (lastMessage) {
+      if (lastMessage?.fields) {
+        setFields(lastMessage.fields);
+      }
+      if (lastMessage?.is_selected) {
+        setShowelAvailable(false);
+      }
+      if (lastMessage.type === "already_used") {
+        setShowAlredyUsed(true);
+        setSelectedField(null);
+        setTimeout(() => {
+          setShowAlredyUsed(false);
+        }, 1500);
+      }
+      if (lastMessage.type === "reserved") {
+        if (lastMessage.number === selectedField) {
+          setShowelAvailable(false);
+        }
+      }
+      if (lastMessage.type === "winner_info") {
+        const code = lastMessage.winner;
+
+        if (!lastMessage.winner) {
+          showPopup("tryAgain");
+        } else if (typeof code === "number") {
+          showPopup("congratulations", code);
+        }
+      }
+    }
+  }, [lastMessage]);
+
+  const savePlace = () => {
+    const seleced = selectedField;
+    if (!raffleId || !seleced) {
+      console.warn("No raffle ID available for savePlace");
+      return;
+    }
+
     const message = {
-      raffleId: raffleId,
-      field_number: index,
+      raffle_id: raffleId,
+      field_number: seleced,
     };
     sendMessage(message);
-  };
-
-  const handleWebSocketMessage = (message: WebSocketMessage) => {
-    switch (message.type) {
-      case "raffle_data":
-        const fields = message.fields;
-        if (fields) {
-          setFields(fields);
-        }
-
-        break;
-      case "gameStart":
-        showPopup("startGame");
-        break;
-      default:
-        console.log("Unknown message type:", message.type);
-    }
-  };
-
-  // Function to send messages to the server
-  const sendMessage = (data: any = {}) => {
-    if (webSocketRef.current && isConnected) {
-      webSocketRef.current.send(JSON.stringify(data));
-    } else {
-      console.warn("WebSocket not connected, cannot send message");
-    }
   };
 
   const showPopup = (contentType: PopupContentType, code?: string) => {
@@ -135,26 +125,12 @@ const GamePage: React.FC = () => {
   };
 
   const handleOpenClick = () => {
-    // console.log("Open button clicked");
-    // // Send game action to WebSocket server
-    // sendMessage("gameAction", { action: "open" });
-    // // For fallback or testing, you can keep the local logic
-    // if (!isConnected) {
-    //   const randomNumber = Math.random();
-    //   if (randomNumber < 0.33) {
-    //     showPopup("congratulations", "WINNER01");
-    //   } else if (randomNumber < 0.66) {
-    //     showPopup("tryAgain");
-    //   } else {
-    //     alert("Ничего не произошло в этот раз.");
-    //   }
-    // }
+    savePlace();
   };
 
   return (
     <Page back={true}>
       <div className="relative h-[100vh] flex flex-col">
-        {/* Connection status indicator */}
         <div
           className={`absolute top-2 right-2 p-2 rounded-full ${
             isConnected ? "bg-green-500" : "bg-red-500"
@@ -162,14 +138,14 @@ const GamePage: React.FC = () => {
           title={isConnected ? "Connected" : "Disconnected"}
         ></div>
 
-        <div className="relative">
-          <div className=" h-[150px] w-[100%] bg-[black]">
+        {showAlredyUsed && (
+          <div className="w-[100%] animate-bounce fixed h-max z-10 top-[235px] bg-[black]">
             <div className={styles.occupied}>
               <span className="text-[23px]">😱</span> Этот гекс занят, выберите
               другой
             </div>
           </div>
-        </div>
+        )}
 
         <div className={styles.gridPageContainer}>
           <div className={styles.instruments}>
@@ -179,25 +155,32 @@ const GamePage: React.FC = () => {
                 alt="showel"
                 className="p-[12px]"
               ></img>
-              <span className="text-h3-bold">x 1</span>
-            </div>
-            <div className={styles.timer}>
-              <span className="text-h5">до конца игры</span>
-              <span
-                className="text-[#FC423F] font-bold text-[34px] leading-[41px] tracking-[0.4px]"
-                style={{ fontWeight: "700" }}
-              >
-                2:20
+              <span className="text-h3-bold text-[white]">
+                x {showelAvailable ? 1 : 0}
               </span>
             </div>
+            {gameInProcess && (
+              <div className={styles.timer}>
+                <span className="text-h5">до конца игры</span>
+                <span
+                  className="text-[#FC423F] font-bold text-[34px] leading-[41px] tracking-[0.4px]"
+                  style={{ fontWeight: "700" }}
+                >
+                  {gameTimeRemaining}
+                </span>
+              </div>
+            )}
           </div>
           <div className={styles.gridContainer}>
             <div ref={container} className={styles.listContainer}>
-              {fields.map((item, i) => {
+              {raffle?.fields.map((item) => {
                 return (
                   <div
+                    data-selected={selectedField === item.number}
                     key={item.id}
-                    onClick={() => savePlace(item?.number)}
+                    onClick={() =>
+                      showelAvailable && setSelectedField(item.number)
+                    }
                   ></div>
                 );
               })}
@@ -207,16 +190,22 @@ const GamePage: React.FC = () => {
 
         <div className={styles.buttonContainer}>
           <button
-            className="button-yellow h-[60px] text-h2 w-full"
+            disabled={!showelAvailable}
+            className={`${
+              showelAvailable ? "button-yellow" : "button-gray"
+            } h-[60px] text-h2 w-full`}
             onClick={handleOpenClick}
           >
             Open
           </button>
         </div>
 
+        {registration && (
+          <ModalPopup contentType={"startGame"} onClose={hidePopup} />
+        )}
+
         {isPopupVisible && (
           <ModalPopup
-            isVisible={isPopupVisible}
             contentType={popupContent}
             promoCode={promoCode}
             onClose={hidePopup}

@@ -5,7 +5,6 @@ import ReactDOM from "react-dom/client";
 import { StrictMode } from "react";
 import { retrieveLaunchParams } from "@telegram-apps/sdk-react";
 
-
 import "./index.css";
 
 import "./mockEnv.ts";

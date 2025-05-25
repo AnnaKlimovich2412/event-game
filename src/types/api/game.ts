@@ -1,18 +1,21 @@
 import { EventFormData, Raffle, SubEvent } from ".";
 
-export type CreateEventResponce = {
-  id: number;
-  name: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  shortDescription: string;
-  description: string;
+export type EventResponce = {
   address: string;
-  subEvents: SubEvent[];
-  raffles: Raffle[];
-  raffleStatus: "started" | "waiting" | "end";
-  showStatus: EventFormData["showStatus"];
+  date: string;
+  description: string;
+  duration: string;
+  endTime: string;
+  id: number;
   image: string;
+  name: string;
+  raffleId: string;
+  raffleStatus: "started" | "waiting" | "end";
+  raffles: Raffle[];
+  shortDescription: string;
+  showStatus: EventFormData["showStatus"];
+  startTime: string;
+  status: number;
+  subEvents: SubEvent[];
   subscriptions: string[];
 };

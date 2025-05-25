@@ -6,6 +6,9 @@ import mkcert from "vite-plugin-mkcert";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), mkcert()],
+  build: {
+    target: "es2022", // Support for top-level await
+  },
   server: {
     proxy: {
       "/api": {

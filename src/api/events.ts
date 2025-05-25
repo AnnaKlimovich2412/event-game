@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 import { firstValueFrom, map } from "rxjs";
 import { ajax, AjaxResponse } from "rxjs/ajax";
-import { CreateEventResponce, SuccessResponse } from "../types/api";
+import { EventResponce, SuccessResponse } from "../types/api";
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export const API_IMAGE_URL = import.meta.env.VITE_API_IMAGE_URL;
@@ -15,8 +15,7 @@ export function start(id: number) {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
-    // TODO: hardcoded user id
-    body: JSON.stringify({ tg_id: "935078579" }),
+    body: JSON.stringify({ tg_id: id }),
   }).pipe(map((response) => response.response));
 
   return firstValueFrom(res$);
@@ -32,9 +31,9 @@ export function subscribeRaflle(raffleId: string) {
   return firstValueFrom(res$);
 }
 
-export function getEvents(): Promise<CreateEventResponce[]> {
+export function getEvents(): Promise<EventResponce[]> {
   const currentDate = DateTime.now().toFormat("yyyy-MM-dd");
-  const res$ = ajax<SuccessResponse<CreateEventResponce[]>>({
+  const res$ = ajax<SuccessResponse<EventResponce[]>>({
     url: `${API_BASE_URL}/list?date=${currentDate}`,
     method: "GET",
     headers: getHeaders(),
@@ -43,8 +42,8 @@ export function getEvents(): Promise<CreateEventResponce[]> {
   return firstValueFrom(res$);
 }
 
-export async function getEventById(id: number): Promise<CreateEventResponce> {
-  const res = ajax<SuccessResponse<CreateEventResponce>>({
+export async function getEventById(id: number): Promise<EventResponce> {
+  const res = ajax<SuccessResponse<EventResponce>>({
     url: `${API_BASE_URL}/view/${id}`,
     method: "GET",
     headers: getHeaders(),

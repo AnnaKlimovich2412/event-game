@@ -14,7 +14,7 @@ export type EventFormData = {
   image: File | string | null;
   subEvents: SubEventList;
   raffles: RaffleList;
-  showStatus?: "past" | "today" | "next" | "pending";
+  showStatus: "past" | "today" | "next" | "pending" | undefined;
 };
 
 export type EventList = EventFormData[];

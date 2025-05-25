@@ -15,9 +15,9 @@
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.5",
-    "@telegram-apps/sdk-react": "^3.3.0",
-    "@telegram-apps/signals": "^1.1.1",
-    "@telegram-apps/telegram-ui": "^2.1.8",
+    "@telegram-apps/sdk-react": "3.3.0",
+    "@telegram-apps/signals": "1.1.1",
+    "@telegram-apps/telegram-ui": "2.1.8",
     "@tonconnect/ui-react": "^2.1.0",
     "eruda": "^3.4.1",
     "luxon": "^3.6.1",

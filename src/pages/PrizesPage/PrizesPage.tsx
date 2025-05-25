@@ -1,17 +1,23 @@
 import { useEffect, useState, type FC } from "react";
 import { Page } from "../../components/Page";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { CreateEventResponce } from "../../types/api";
+import { EventResponce } from "../../types/api";
 import { DateTime } from "luxon";
 import { imageRetrieve } from "../../api/events";
+import { useEventPolling } from "../../hooks/useEventPolling";
+import { useEvent } from "../../context/Event.context";
 
 export const PrizesPage: FC = () => {
   const location = useLocation();
-  const event = location.state?.event as CreateEventResponce | undefined;
+  const locationEvent = location.state?.event as EventResponce | undefined;
+  const { event: contextEvent, raffle } = useEvent();
   const [imageError, setImageError] = useState<boolean>(false);
   const [imageUrl, setImageUrl] = useState<string>("");
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  useEventPolling();
+  const event = contextEvent || locationEvent;
 
   if (!event) {
     return (
@@ -40,7 +46,7 @@ export const PrizesPage: FC = () => {
   }, []);
 
   const handleParticipateClick = () => {
-    if (event && id) {
+    if (event && id && raffle?.id) {
       navigate(`/event/${id}/game/${raffle.id}`, { state: { event: event } });
     }
   };
@@ -50,14 +56,12 @@ export const PrizesPage: FC = () => {
     .setZone("Europe/Moscow")
     .toFormat("HH:mm");
 
-  const raffle = event.raffles[0];
-
   return (
     <Page back={true}>
       <div className="p-[16px] min-h-screen">
         <div className="h-[90px] w-[100%]"></div>
         <div className="flex flex-col gap-[8px]">
-          <div className="flex flex-col pt-[20px] px-[4px] pb-[12px]">
+          <div className="flex flex-col gap-[4px] pt-[20px] px-[4px] pb-[12px]">
             <span className="text-h1 text-[white]">{event.name}: розыгрыш</span>
             <span className="text-h5 text-[white]">
               {eventDateStr}, {eventTimeStr} MSK
@@ -69,7 +73,7 @@ export const PrizesPage: FC = () => {
           </div>
         </div>
         <div className="flex flex-col gap-[12px] mt-[28px]">
-          {raffle.prizes.map((prize) => (
+          {raffle?.prizes.map((prize) => (
             <div
               key={prize.id}
               className="bg-[#202223] rounded-[12px] flex gap-[12px]"
@@ -89,7 +93,7 @@ export const PrizesPage: FC = () => {
               <div className="flex flex-col gap-[8px] py-[22px]">
                 <span className="text-h3-bold text-[white]">{prize.name}</span>
                 <span className="text-h5">
-                  Участников: {event.subscriptions?.length}
+                  Участников: {raffle.subscriptions?.length}
                 </span>
               </div>
             </div>

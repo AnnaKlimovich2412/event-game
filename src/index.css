@@ -55,3 +55,9 @@ body {
   color: var(--button-text);
   border-radius: 12px;
 }
+
+.button-gray {
+  background-color: var(--secondary-text);
+  color: var(--button-text);
+  border-radius: 12px;
+}
