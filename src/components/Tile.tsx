@@ -28,7 +28,7 @@ const Tile: React.FC<TileProps> = ({ event }) => {
   }, []);
 
   return (
-    <Section
+    <div
       key={event.id}
       style={{
         width: "-webkit-fill-available",
@@ -37,7 +37,7 @@ const Tile: React.FC<TileProps> = ({ event }) => {
         overflow: "hidden",
       }}
     >
-      <div className="relative min-h-[156px] max-h-[156px] overflow-hidden">
+      <div className="relative min-h-[156px] max-h-[156px] overflow-hidden bg-[#202223]">
         {!imageError && imageUrl && (
           <img
             src={imageUrl || ""}
@@ -74,7 +74,7 @@ const Tile: React.FC<TileProps> = ({ event }) => {
           Участвовать
         </Button>
       </div>
-    </Section>
+    </div>
   );
 };
 
